@@ -9,7 +9,7 @@
     
     <title>
         
-            归档: 2021 |
+            mysql设计：多条记录支持用户自定义排序 |
         
         Explore
     </title>
@@ -71,7 +71,7 @@
                         </li>
                     
                         <li class="menu-item">
-                            <a class="active"
+                            <a class=""
                                href="/archives"
                             >
                                 归档
@@ -121,7 +121,7 @@
                 </li>
             
                 <li class="drawer-menu-item flex-center">
-                    <a class="active"
+                    <a class=""
                        href="/archives">归档</a>
                 </li>
             
@@ -151,38 +151,142 @@
 
                 
                     <div class="fade-in-down-animation">
-    <div class="archive-container ">
+    <div class="article-content-container">
+
+        <div class="article-title">
+            <span class="title-hover-animation">mysql设计：多条记录支持用户自定义排序</span>
+        </div>
+
         
-<div class="archive-list-container">
+            <div class="article-header">
+                <div class="avatar">
+                    <img src="/images/avatar.jpeg">
+                </div>
+                <div class="info">
+                    <div class="author">
+                        <span class="name">0b010</span>
+                        
+                            <span class="author-label">Lv1</span>
+                        
+                    </div>
+                    <div class="meta-info">
+                        <div class="article-meta-info">
+    <span class="article-date article-meta-item">
+        <i class="fas fa-edit"></i>&nbsp;2021-06-10 11:32:03
+    </span>
     
-        <section class="archive-item">
-            <div class="archive-item-header">
-                <span class="archive-year">2021</span>
-                <span class="archive-year-post-count">[2]</span>
-            </div>
-            <ul class="article-list">
+        <span class="article-categories article-meta-item">
+            <i class="fas fa-folder"></i>&nbsp;
+            <ul>
                 
-                    <li class="article-item">
-                        <a class="article-title"
-                           href="/2021/06/10/mysql-customize-sort/"
-                        >mysql设计：多条记录支持用户自定义排序</a>
-                        <span class="article-date">06-10</span>
-                    </li>
-                
-                    <li class="article-item">
-                        <a class="article-title"
-                           href="/2021/06/09/hello-world/"
-                        >Hello World</a>
-                        <span class="article-date">06-09</span>
+                    <li>
+                        <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a>&nbsp;
                     </li>
                 
             </ul>
-        </section>
+        </span>
+    
+    
+        <span class="article-tags article-meta-item">
+            <i class="fas fa-tags"></i>&nbsp;
+            <ul>
+                
+                    <li>
+                        <a href="/tags/mysql/">mysql</a>&nbsp;
+                    </li>
+                
+            </ul>
+        </span>
+    
+
+    
+    
+    
+    
+        <span class="article-pv article-meta-item">
+            <i class="fas fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+        </span>
     
 </div>
 
+                    </div>
+                </div>
+            </div>
+        
+
+        <div class="article-content markdown-body">
+            <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>故事是这样的，我们的产品的某个场景里，有多个选项需要排列展示给用户，供用户选择。产品经理希望后台管理系统（CMS）能够支持人为地修改这些元素的排列顺序。<br>类比一下，就类似于我们在电商平台买东西时，会有套餐一、套餐二等等很多套餐供我们选择，现在需要支持在后台随时修改这些套餐排列的先后顺序。</p>
+<h2 id="前端方案"><a href="#前端方案" class="headerlink" title="前端方案"></a>前端方案</h2><p>方案有很多，不过因为一些原因，我们需要使用 table 来呈现数据，基于 table，大致列出三种操作方案：</p>
+<ol>
+<li>通过输入框直接填写每条记录的排序序号</li>
+<li>每条记录后面增加 up 和 down 两个按钮，通过点击按钮来操作当前记录向上或者向下移动一位</li>
+<li>直接拖动表格每行记录来调整顺序</li>
+</ol>
+<p>方案一实现最简单，用户使用体验较差；方案三实现相对复杂，但用户使用体验最好；方案二的实现复杂度和使用体验则介于两者之间。<br>最终在 前端方案 上，我们还是选择了使用体验最好的方案三。</p>
+<h2 id="数据库设计"><a href="#数据库设计" class="headerlink" title="数据库设计"></a>数据库设计</h2><p>前端方案已定，接下来的重点则主要在的数据库的设计上。<br>前端 table 里每行数据对应数据库表里的每条记录，如何控制这些记录的输出顺序，主要也有三种方案：</p>
+<ol>
+<li>数据表增加一列sort字段，专门存储每条记录的排序序号<br> 1.1 每次拖动重置所有记录的排序字段  <pre><code> 数据查询：数据库排序  
+ 修改顺序：修改全部记录（小优化：仅修改拖动前后位置区间内的记录）  
+ 添加记录：修改全部记录  
+ 删除记录：仅删除本记录  
+</code></pre>
+ 1.2 排序字段使用double类型，每次拖动后，仅修改被拖动记录的排序字段，其值为新位置前后两条记录排序值的和的二分之一  <pre><code> 数据查询：数据库排序  
+ 修改顺序：仅修改本记录的排序字段，但可修改次数受sort字段的数据精度影响  
+ 添加记录：只需添加一条记录  
+ 删除记录：仅删除本删除记录  
+</code></pre>
+</li>
+<li>数据表增加两列prev、next字段，分别存储本条记录前一个记录和后一个记录的id  <pre><code> 数据查询：查全部数据，并自行排序  
+ 修改顺序：修改原位置和现位置前后两条记录和当前记录  
+ 添加记录：修改插入位置前后两条记录  
+ 删除记录：修改被删除记录前后两条记录  
+</code></pre>
+</li>
+<li>增加一个数据表，将每条记录的id按排列顺序放在一个json数据数组中，并序列化成字符串存入该数据表  <pre><code> 数据查询：查数据表和排序表，并自行排序  
+ 修改顺序：修改排序表  
+ 添加记录：修改数据表和排序表  
+ 删除记录：修改数据表和排序表  
+</code></pre>
+以上几种设计和实现方案各有优缺点，最初我陷入了一个误区，总想“一步到位”，找到一个集一切优点于一身的完美方案（比如 实现简单、可利用数据库排序、支持无限次修改、支持大量数据、修改顺序时数据库改动小、单表操作等），然而，被现实狠狠地抽了一记耳光后，终于意识到，合适的才是最好的，最终选择了1.2的实现方案。</li>
+</ol>
+<h2 id="方案选择"><a href="#方案选择" class="headerlink" title="方案选择"></a>方案选择</h2><p>why？为什么是1.2？<br>仔细梳理业务后发现：  </p>
+<ol>
+<li>既然是支持用户手动拖动，那数据量必然不会大，否则人为哪能玩的过来，而我们目前还足10个，最多也就2位数的量  </li>
+<li>本身这个排列顺序就很少改动，只有极少数的特殊情况下才会改动，而double类型数据范围为 -2^1024-2^1024，数据精度为15-16位，至少能支持1000+次增改，满足我们的业务情况  </li>
+</ol>
+<p>所以，本着简单实现的原则，再结合实际场景，方案1.2自然是最佳选择。  </p>
+<h2 id="心得"><a href="#心得" class="headerlink" title="心得"></a>心得</h2><p>抛开业务场景选方案都是耍流氓~~<br>很多时候并没有想象中的完美方案，适合自己的才会最好的~~</p>
+
+        </div>
+
+        
+
+        
+            <div class="article-nav">
+                
+                
+                    <div class="article-next">
+                        <a class="next"
+                           rel="next"
+                           href="/2021/06/09/hello-world/"
+                        >
+                            <span class="title flex-center">
+                                <span class="post-nav-title-item">Hello World</span>
+                                <span class="post-nav-item">下一篇</span>
+                            </span>
+                            <span class="right arrow-icon flex-center">
+                              <i class="fas fa-chevron-right"></i>
+                            </span>
+                        </a>
+                    </div>
+                
+            </div>
+        
+
+        
     </div>
 </div>
+
 
                 
             </div>
@@ -224,6 +328,23 @@
         </div>
     </div>
 
+    
+        <div class="post-tools">
+            <div class="post-tools-container">
+    <ul class="tools-list">
+        <!-- TOC aside toggle -->
+        
+            <li class="tools-item page-aside-toggle">
+                <i class="fas fa-outdent"></i>
+            </li>
+        
+
+        <!-- go comment -->
+        
+    </ul>
+</div>
+
+        </div>
     
 
     <div class="right-bottom-side-tools">
@@ -269,6 +390,14 @@
 
     </div>
 
+    
+        <aside class="page-aside">
+            <div class="post-toc-wrap">
+    <div class="post-toc">
+        <ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E7%AB%AF%E6%96%B9%E6%A1%88"><span class="nav-number">2.</span> <span class="nav-text">前端方案</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AE%BE%E8%AE%A1"><span class="nav-number">3.</span> <span class="nav-text">数据库设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E9%80%89%E6%8B%A9"><span class="nav-number">4.</span> <span class="nav-text">方案选择</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BF%83%E5%BE%97"><span class="nav-number">5.</span> <span class="nav-text">心得</span></a></li></ol>
+    </div>
+</div>
+        </aside>
     
 
     <div class="image-viewer-container">
@@ -326,6 +455,8 @@
 
 
 <div class="post-scripts">
+    
+        <script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.4.3/source/js/left-side-toggle.js"></script><script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.4.3/source/js/libs/anime.min.js"></script><script src="//cdn.jsdelivr.net/npm/hexo-theme-keep@3.4.3/source/js/toc.js"></script>
     
 </div>
 
