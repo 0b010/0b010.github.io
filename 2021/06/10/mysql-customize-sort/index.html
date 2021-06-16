@@ -252,7 +252,7 @@
 <h2 id="方案选择"><a href="#方案选择" class="headerlink" title="方案选择"></a>方案选择</h2><p>why？为什么是1.2？<br>仔细梳理业务后发现：  </p>
 <ol>
 <li>既然是支持用户手动拖动，那数据量必然不会大，否则人为哪能玩的过来，而我们目前还足10个，最多也就2位数的量  </li>
-<li>本身这个排列顺序就很少改动，只有极少数的特殊情况下才会改动，而double类型数据范围为 -2^1024-2^1024，数据精度为15-16位，至少能支持1000+次增改，满足我们的业务情况  </li>
+<li>本身这个排列顺序就很少改动，只有极少数的特殊情况下才会改动，而double类型数据范围为 -2^1024-2^1024，数据精度为15-16位，至少能支持1000+次增改，满足我们的业务需求  </li>
 </ol>
 <p>所以，本着简单实现的原则，再结合实际场景，方案1.2自然是最佳选择。  </p>
 <h2 id="心得"><a href="#心得" class="headerlink" title="心得"></a>心得</h2><p>抛开业务场景选方案都是耍流氓~~<br>很多时候并没有想象中的完美方案，适合自己的才会最好的~~</p>
@@ -283,6 +283,85 @@
             </div>
         
 
+        
+            <div class="comment-container">
+                <div class="comments-container">
+    <div id="comment-anchor"></div>
+    <div class="comment-area-title">
+        <i class="fas fa-comments">&nbsp;评论</i>
+    </div>
+    
+
+        
+            
+    <div class="valine-container">
+        <script 
+                src="//cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js"></script>
+        <div id="vcomments"></div>
+        <script >
+            function loadValine() {
+                new Valine({
+                    el: '#vcomments',
+                    appId: '0dLBPV1NeMKaDp0av0VJTERk-gzGzoHsz',
+                    appKey: 'HSN1VKvIaCYuOSWIfXM7mbMv',
+                    meta: ['nick', 'mail', 'link'],
+                    avatar: 'wavatar',
+                    enableQQ: true,
+                    placeholder: '请在上栏留下邮箱，方便收到回复，欢迎各位评论指正~',
+                    lang: 'zh-CN'.toLowerCase()
+                });
+
+                function getAuthor(language) {
+                    switch (language) {
+                        case 'en':
+                            return 'Author';
+                        case 'zh-CN':
+                            return '博主';
+                        default:
+                            return 'Master';
+                    }
+                }
+
+                // Add "Author" identify
+                const getValineDomTimer = setInterval(() => {
+                    const vcards = document.querySelectorAll('#vcomments .vcards .vcard');
+                    if (vcards.length > 0) {
+                        let author = '0b010';
+
+                        if (author) {
+                            for (let vcard of vcards) {
+                                const vnick_dom = vcard.querySelector('.vhead .vnick');
+                                const vnick = vnick_dom.innerHTML;
+                                if (vnick === author) {
+                                    vnick_dom.innerHTML = `${vnick} <span class="author">${getAuthor(KEEP.hexo_config.language)}</span>`
+                                }
+                            }
+                        }
+                        clearInterval(getValineDomTimer);
+                    } else {
+                        clearInterval(getValineDomTimer);
+                    }
+                }, 2000);
+            }
+
+            if ('false') {
+                const loadValineTimeout = setTimeout(() => {
+                    loadValine();
+                    clearTimeout(loadValineTimeout);
+                }, 1000);
+            } else {
+                window.addEventListener('DOMContentLoaded', loadValine);
+            }
+        </script>
+    </div>
+
+
+
+        
+    
+</div>
+
+            </div>
         
     </div>
 </div>
@@ -340,6 +419,10 @@
         
 
         <!-- go comment -->
+        
+            <li class="go-comment">
+                <i class="fas fa-comment"></i>
+            </li>
         
     </ul>
 </div>
